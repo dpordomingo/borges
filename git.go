@@ -294,7 +294,7 @@ func (b *temporaryRepositoryBuilder) Clone(
 	}
 
 	o := &git.FetchOptions{
-		RefSpecs: []config.RefSpec{FetchRefSpec, FetchHEAD},
+		RefSpecs: []config.RefSpec{ /*FetchRefSpec,*/ FetchHEAD},
 		Force:    true,
 	}
 	err = remote.FetchContext(ctx, o)
