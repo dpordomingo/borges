@@ -1,0 +1,41 @@
+version: '3.3'
+
+services:
+  postgres:
+    image: "postgres:9.6-alpine"
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_PASSWORD: testing
+      POSTGRES_USER: testing
+  rabbitmq:
+    image: "rabbitmq:3-management"
+    restart: always
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+  consumer:
+    image: srcd/borges:dev
+    build: .
+    depends_on:
+      - postgres
+      - rabbitmq
+    links:
+      - "rabbitmq:rabbitmq"
+      - "postgres:postgres"
+    entrypoint: ["/bin/sh"]
+    command: ["-c", "sleep ${BORGES_DELAY:-10} && borges init && borges consumer --workers=${WORKERS:-1} --bucket-size=${BUCKET_SIZE:-2}"]
+    volumes:
+      - ${SIVA_ROOT_PATH:?'SIVA_ROOT_PATH'; siva root absolute path is missing}:/var/root-repositories
+  producer:
+    image: srcd/borges:dev
+    depends_on:
+      - consumer
+    links:
+      - "rabbitmq:rabbitmq"
+      - "postgres:postgres"
+    entrypoint: ["/bin/sh"]
+    command: ["-c", "sleep ${BORGES_DELAY:-10} && borges producer file /opt/borges/repos.txt"]
+    volumes:
+      - ${REPOS_TXT_PATH:?'REPOS_TXT_PATH'; 'repos.txt' absolute path is missing}:/opt/borges/repos.txt
